@@ -67,16 +67,12 @@ for iter in [1e2, 1e3, 1e4, 1e5, 1e6]:
         results = results.append(pandas.DataFrame(
                 dict(iter=[iter], rep=[rep],
                      p_R=[stats['mean']],
-                     p_R_lb=[stats['95% HPD interval'][0]],
-                     p_R_ub=[stats['95% HPD interval'][1]],
                      mc_error=[stats['mc error']])),
                                  ignore_index=True)
 
 results['true'] = (.00198 + .1584) / (.00198 + .288 + .1584 + 0.)
 results['err'] = results['true'] - results['p_R']
 results['abs_err'] = pl.absolute(results['err'])
-results['covered'] = (results['p_R_lb'] <= results['true']) & (results['p_R_ub'] >= results['true'])
-results['covered'] = 1.*results['covered']
 results['thin'] = 1
 
 results_summary = results.groupby(['iter', 'thin']).describe().unstack()
@@ -86,8 +82,4 @@ print
 
 print 'median absolute error (and mc error):'
 print results_summary.ix[:, [('abs_err', '50%'), ('mc_error', '50%')]]
-print
-
-print 'percent covered:'
-print results_summary['covered', 'mean']
 print
