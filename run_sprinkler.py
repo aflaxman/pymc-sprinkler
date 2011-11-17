@@ -58,15 +58,36 @@ m.R.value = True  # make sure that the model is not left in an impossible state
 
 ## explore the error in the estimation as a function of iter and thin
 results = pandas.DataFrame()
-for iter in [1e2, 1e3, 1e4, 1e5]:
-    for thin in [1, 10, 100]:
-        for rep in range(10):
-            if iter/thin >= 100:
-                m = mc.MCMC(sprinkler)
-                m.sample(iter=iter, thin=thin)
+for iter in [1e2, 1e3, 1e4, 1e5, 1e6]:
+    for rep in range(10):
+        m = mc.MCMC(sprinkler)
+        m.sample(iter=iter)
 
-                stats = m.R.stats()
-                results = results.append(pandas.DataFrame(
-                        dict(iter=[iter], thin=[thin], rep=[rep],
-                             p_R=[stats['mean']], mc_error=[stats['mc error']])),
-                                         ignore_index=True)
+        stats = m.R.stats()
+        results = results.append(pandas.DataFrame(
+                dict(iter=[iter], rep=[rep],
+                     p_R=[stats['mean']],
+                     p_R_lb=[stats['95% HPD interval'][0]],
+                     p_R_ub=[stats['95% HPD interval'][1]],
+                     mc_error=[stats['mc error']])),
+                                 ignore_index=True)
+
+results['true'] = (.00198 + .1584) / (.00198 + .288 + .1584 + 0.)
+results['err'] = results['true'] - results['p_R']
+results['abs_err'] = pl.absolute(results['err'])
+results['covered'] = (results['p_R_lb'] <= results['true']) & (results['p_R_ub'] >= results['true'])
+results['covered'] = 1.*results['covered']
+results['thin'] = 1
+
+results_summary = results.groupby(['iter', 'thin']).describe().unstack()
+print 'median bias:'
+print results_summary['err', '50%']
+print
+
+print 'median absolute error (and mc error):'
+print results_summary.ix[:, [('abs_err', '50%'), ('mc_error', '50%')]]
+print
+
+print 'percent covered:'
+print results_summary['covered', 'mean']
+print
