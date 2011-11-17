@@ -83,3 +83,12 @@ print
 print 'median absolute error (and mc error):'
 print results_summary.ix[:, [('abs_err', '50%'), ('mc_error', '50%')]]
 print
+
+
+results_summary[('abs_err', '50%')].unstack().plot(linewidth=3, marker='s', mec='w')
+pl.loglog(list(results['iter'])*pl.exp(pl.randn(len(results))*.05), list(results['abs_err']), 'g*')
+pl.axis([90, 1100000, .002, .6])
+pl.xlabel('MCMC Iterations')
+pl.xticks(rotation=0, ha='center')
+pl.ylabel('Median Absolute Error')
+pl.savefig('sprinkler_mae.png')
